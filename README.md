@@ -69,3 +69,17 @@ npm run build
   `frontend/src/data/seed.ts`。
 - 状态流转只允许在 `local-service.ts` 里改，页面组件不做业务判断。
 - 想回到初始数据：清掉浏览器里 `airport-ground-ops:entries` 这一项，或调用 `resetModule(模块)`。
+
+### 行李装卸复核
+
+- 行李域的状态机、逐条核对（传送带 ↔ 舱位、登记件数 ↔ 已装机件数）、批量提交、退回重报都集中在
+  `frontend/src/data/baggage.ts`（纯函数），`local-service.ts` 负责编排与落库，页面只调服务层。
+- 状态只许 待装载 → 装载中 → 待复核 → 已装机 顺序推进；退回只能回装载中重报，不许跳步。
+- 退回只作用于被退那一行：派生的已装机件数按「上次确认件数」快照回落，同批其他行不受影响；
+  只有待复核能退回，重复退回会被状态机挡下，不会反复扣减。
+- 件数以明细行的原始登记为系统记录；按舱位的汇总永远由明细现算（`summarizeByCompartment`），
+  不落地另存，明细与汇总天然同源。
+- 被退回待重报的作业会出现在航班保障页的「保障待办清单」（`listFlightTodos` 由行李明细派生），
+  重新提交复核后自动消除。
+- 域逻辑验证：`cd frontend && npm test`（`frontend/tests/baggage.domain.test.ts`，
+  直接打服务层与数据层，node 可跑）。

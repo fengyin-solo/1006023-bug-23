@@ -24,6 +24,35 @@
       </span>
     </p>
 
+    <section class="panel">
+      <h3 class="panel-title">保障待办清单</h3>
+      <table v-if="todos.length" class="data-table">
+        <thead>
+          <tr>
+            <th>来源</th>
+            <th>作业编号</th>
+            <th>航班号</th>
+            <th>装载舱位</th>
+            <th>传送带编号</th>
+            <th>退回原因</th>
+            <th>当前状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="todo in todos" :key="todo.key">
+            <td>{{ todo.来源 }}</td>
+            <td>{{ todo.作业编号 }}</td>
+            <td>{{ todo.航班号 }}</td>
+            <td>{{ todo.装载舱位 }}</td>
+            <td>{{ todo.传送带编号 }}</td>
+            <td>{{ todo.退回原因 }}</td>
+            <td>{{ todo.当前状态 }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-else class="empty-state">暂无待办事项</p>
+    </section>
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -76,10 +105,11 @@ import { computed, onMounted, ref } from 'vue'
 import {
   downloadEntries,
   listEntries,
+  listFlightTodos,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
-import type { EntryRow } from '@/data/types'
+import type { EntryRow, FlightTodo } from '@/data/types'
 
 const meta = moduleMeta('flight')
 const columns = ["保障编号", "航班号", "机型", "计划到达", "机位号", "保障等级", "保障班组", "保障状态"]
@@ -89,6 +119,7 @@ const stats = [{"label": "今日保障任务", "value": 0}, {"label": "保障中
 
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
+const todos = ref<FlightTodo[]>([])
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
@@ -128,6 +159,8 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    // 待办清单与行李明细同源：行李页退回一落库，这里刷新就能看到
+    todos.value = listFlightTodos()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '航班保障列表读取失败'
   }
