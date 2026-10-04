@@ -24,6 +24,36 @@
       </span>
     </p>
 
+    <section class="panel">
+      <h3>航班保障待办清单</h3>
+      <p class="panel-note">行李复核退回会在这里生成待办（保障等级「行李复核退回」），对应作业确认装机后自动办结。</p>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>保障编号</th>
+            <th>航班号</th>
+            <th>保障等级</th>
+            <th>保障班组</th>
+            <th>保障状态</th>
+            <th>当前状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="todo in todos" :key="String(todo.id)">
+            <td>{{ todo.保障编号 }}</td>
+            <td>{{ todo.航班号 }}</td>
+            <td>{{ todo.保障等级 }}</td>
+            <td>{{ todo.保障班组 }}</td>
+            <td>{{ todo.保障状态 }}</td>
+            <td>{{ todo.status }}</td>
+          </tr>
+          <tr v-if="!todos.length">
+            <td colspan="6" class="empty-state">暂无待办事项</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
     <form class="filter-bar" @submit.prevent="reload">
       <label v-for="field in filterFields" :key="field" class="filter-item">
         <span>{{ field }}</span>
@@ -88,6 +118,7 @@ const statuses = ["待接收", "保障中", "保障完成", "已终止"]
 const stats = [{"label": "今日保障任务", "value": 0}, {"label": "保障中任务", "value": 0}, {"label": "保障完成率", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
+const todos = ref<EntryRow[]>([])
 const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
@@ -128,6 +159,8 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    // 待办清单不受筛选条件影响，始终从同一份数据里取待处理项
+    todos.value = listEntries(meta.key).items.filter((row) => row.pending)
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '航班保障列表读取失败'
   }

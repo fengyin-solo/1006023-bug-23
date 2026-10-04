@@ -65,7 +65,11 @@ npm run build
 
 - 每个模块的页面在 `frontend/src/views/<模块>/index.vue`，页面只负责渲染，读写统一走
   `frontend/src/api/local-service.ts`。
+- 行李装卸的批量提交复核、逐条退回重报与按舱位汇总走 `frontend/src/api/baggage-service.ts`：
+  件数以明细行的原始登记为唯一来源，按舱位汇总与已装机件数都是实时派生、不落地存储；
+  退回只作用于当前行，退回结果会同步写入航班保障的待办清单。
 - 字段、状态、动作与流转目标集中在 `frontend/src/data/modules.ts`；示例数据在
   `frontend/src/data/seed.ts`。
-- 状态流转只允许在 `local-service.ts` 里改，页面组件不做业务判断。
+- 状态流转只允许在 `local-service.ts` / `baggage-service.ts` 里改，页面组件不做业务判断。
 - 想回到初始数据：清掉浏览器里 `airport-ground-ops:entries` 这一项，或调用 `resetModule(模块)`。
+- 行李域逻辑有单测：`cd frontend && npm run test`。
